@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import api from '../../../../lib/api';
 import DashboardLayout from '../../../../components/DashboardLayout';
-import { Bot, Save, ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
+import { Bot, Save, ArrowLeft, PlusCircle, Trash2, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditBotPage() {
@@ -20,6 +20,20 @@ export default function EditBotPage() {
     use_ai: true,
     faqs: []
   });
+
+  // PDF Management State
+  const [pdfs, setPdfs] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+
+  const fetchPdfs = async () => {
+    try {
+      const res = await api.get(`/pdfs/bot/${botId}`);
+      setPdfs(res.data);
+    } catch (err) {
+      console.error('Failed to load PDFs:', err);
+    }
+  };
 
   useEffect(() => {
     if (!botId) return;
@@ -52,7 +66,46 @@ export default function EditBotPage() {
     };
     
     fetchBot();
+    fetchPdfs(); // Fetch PDFs alongside bot details
   }, [botId, router]);
+
+  const handlePdfUpload = async () => {
+    if (!selectedFile) return;
+    setUploadingPdf(true);
+
+    const data = new FormData();
+    data.append('pdf', selectedFile);
+    data.append('botId', botId);
+
+    try {
+      await api.post('/pdfs/upload', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setSelectedFile(null);
+      // Reset file input
+      document.querySelector('input[type="file"]').value = '';
+      await fetchPdfs(); // Refresh list to show 'pending' status
+      alert('PDF uploaded successfully! Processing started.');
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Failed to upload PDF: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
+  const handleDeletePdf = async (pdfId) => {
+    if (!confirm('Are you sure you want to delete this PDF and its learned knowledge?')) return;
+    try {
+      await api.delete(`/pdfs/${pdfId}`);
+      await fetchPdfs();
+    } catch (err) {
+      console.error('Failed to delete PDF:', err);
+      alert('Failed to delete PDF');
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -202,6 +255,71 @@ export default function EditBotPage() {
 
              <div className="pt-8 border-t border-gray-200 dark:border-gray-700">
                <div className="flex items-center justify-between mb-4">
+                 <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center">
+                   <FileText className="mr-2 h-5 w-5 text-indigo-500" /> Knowledge Base (PDF Docs)
+                 </h3>
+               </div>
+               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                 Upload PDF documents containing your company's knowledge. The AI will read these to answer user questions.
+               </p>
+
+               {/* PDF Upload Area */}
+               <div className="flex items-center space-x-4 mb-6">
+                 <input
+                   type="file"
+                   accept=".pdf"
+                   onChange={(e) => setSelectedFile(e.target.files[0])}
+                   className="block w-full text-sm text-gray-500 dark:text-gray-400
+                     file:mr-4 file:py-2 file:px-4
+                     file:rounded-md file:border-0
+                     file:text-sm file:font-semibold
+                     file:bg-indigo-50 file:text-indigo-700
+                     hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300"
+                 />
+                 <button
+                   type="button"
+                   onClick={handlePdfUpload}
+                   disabled={uploadingPdf || !selectedFile}
+                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                 >
+                   {uploadingPdf ? 'Uploading...' : 'Upload PDF'}
+                 </button>
+               </div>
+
+               {/* PDF List */}
+               <div className="space-y-3">
+                 {pdfs.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">No PDFs uploaded yet. Try uploading your manual or pricing sheet.</p>
+                 ) : (
+                    <ul className="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-md">
+                      {pdfs.map((pdf) => (
+                        <li key={pdf.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-5 w-5 text-red-400" />
+                            <div>
+                               <p className="text-sm font-medium text-gray-900 dark:text-white">{pdf.file_name}</p>
+                               <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  Status: <span className={pdf.status === 'completed' ? 'text-green-500' : 'text-yellow-500'}>{pdf.status}</span>
+                               </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePdf(pdf.id)}
+                            className="text-gray-400 hover:text-red-500 p-2 transition-colors"
+                            title="Delete PDF"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                 )}
+               </div>
+             </div>
+
+             <div className="pt-8 border-t border-gray-200 dark:border-gray-700">
+               <div className="flex items-center justify-between mb-4">
                  <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Knowledge Base (FAQs)</h3>
                  <button
                    type="button"
@@ -214,7 +332,7 @@ export default function EditBotPage() {
                
                <div className="space-y-4">
                  {!formData.faqs || formData.faqs.length === 0 ? (
-                   <p className="text-sm text-gray-500 text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">No FAQs added yet. Add some to train your AI.</p>
+                   <p className="text-sm text-gray-500 text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">No FAQs added yet. Add simple questions and answers directly.</p>
                  ) : (
                    formData.faqs.map((faq, index) => (
                      <div key={index} className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 relative group">
