@@ -14,7 +14,8 @@ export default function NewBotPage() {
     welcome_message: 'Hi there! How can I help you today?',
     color_theme: '#4f46e5',
     use_ai: true,
-    faqs: []
+    faqs: [],
+    prompt: ''
   });
 
   const handleChange = (e) => {
@@ -128,7 +129,26 @@ export default function NewBotPage() {
                      />
                    </div>
                  </div>
-               </div>
+                  <div className="sm:col-span-6">
+                     <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                       Agent Prompt (Instructions)
+                     </label>
+                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                       Define how the AI should behave (e.g. "You are a helpful support agent for RSI Concepts. Answer politely.")
+                     </p>
+                     <div className="mt-1">
+                       <textarea
+                         id="prompt"
+                         name="prompt"
+                         rows={4}
+                         placeholder="You are a helpful customer support assistant. Answer clearly and politely."
+                         value={formData.prompt || ''}
+                         onChange={handleChange}
+                         className="shadow-sm focus:ring-indigo-500 bg-transparent dark:text-white border p-3 border-gray-300 dark:border-gray-600 focus:border-indigo-500 block w-full sm:text-sm rounded-md"
+                       />
+                     </div>
+                  </div>
+                </div>
              </div>
 
              <div className="pt-8 border-t border-gray-200 dark:border-gray-700">
