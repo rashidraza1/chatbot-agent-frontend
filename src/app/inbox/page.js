@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { io } from 'socket.io-client';
 import Cookies from 'js-cookie';
 import { Bot, Send, User, Clock, AlertCircle, MessageSquare, Smile, Mic, MicOff, Search, ChevronRight } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 export default function InboxPage() {
   const [conversations, setConversations] = useState([]);
@@ -272,7 +273,9 @@ export default function InboxPage() {
                             AI Agent
                           </div>
                         )}
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                        <div className="markdown-content text-sm leading-relaxed">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
                         <div className={`mt-2 flex items-center justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
                            <Clock className="w-2.5 h-2.5 text-gray-400" />
                            <span className="text-[9px] text-gray-400 font-medium">

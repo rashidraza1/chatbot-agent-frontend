@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useParams } from 'next/navigation';
 import { io } from 'socket.io-client';
 import { Bot, Send, X, AlertCircle, Smile, Mic, MicOff, Maximize2, Minimize2, Minus, History, MessageSquare, Plus, Menu, Search, Trash2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -372,7 +373,9 @@ export default function WidgetPage() {
                         ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-none shadow-indigo-200 dark:shadow-none'
                         : 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-100 dark:border-gray-700 shadow-sm'
                         }`}>
-                        <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                        <div className="markdown-content leading-relaxed">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
                         <span className={`text-[10px] mt-1 block opacity-50 ${isVisitor ? 'text-right' : 'text-left'}`}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
