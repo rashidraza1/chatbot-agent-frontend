@@ -48,6 +48,25 @@ export default function InboxPage() {
        if (activeConversation && msg.conversation_id === activeConversation.id) {
           setMessages(prev => [...prev, msg]);
        }
+       
+       // Update conversations list: move the updated conversation to the top
+       setConversations(prev => {
+          const convIndex = prev.findIndex(c => c.id === msg.conversation_id);
+          if (convIndex !== -1) {
+             const updatedConv = { 
+                ...prev[convIndex], 
+                updatedAt: msg.createdAt 
+             };
+             // Remove the old version and put the new one at the top
+             const otherConversations = prev.filter(c => c.id !== msg.conversation_id);
+             return [updatedConv, ...otherConversations];
+          } else {
+             // If conversation not in list, it might be new, could consider fetching or just ignore
+             // For now, let's just return prev to avoid issues, 
+             // but if we had the full conversation object we'd add it.
+             return prev;
+          }
+       });
     });
 
     socket.on('agent_joined', () => {
@@ -98,6 +117,21 @@ export default function InboxPage() {
        senderType: 'agent',
        senderId: JSON.parse(atob(Cookies.get('token').split('.')[1])).id
     });
+
+    // Immediately move this conversation to the top in the sidebar
+    setConversations(prev => {
+       const convIndex = prev.findIndex(c => c.id === activeConversation.id);
+       if (convIndex !== -1) {
+          const updatedConv = { 
+             ...prev[convIndex], 
+             updatedAt: new Date().toISOString()
+          };
+          const otherConversations = prev.filter(c => c.id !== activeConversation.id);
+          return [updatedConv, ...otherConversations];
+       }
+       return prev;
+    });
+
     setNewMessage('');
     setShowEmojiPicker(false);
   };
@@ -130,10 +164,16 @@ export default function InboxPage() {
     recognition.start();
   };
 
-  const filteredConversations = conversations.filter(c => 
-    c.Visitor?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    c.Bot?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredConversations = conversations
+    .filter(c => 
+      c.Visitor?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.Bot?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
 
   return (
     <DashboardLayout>
@@ -190,7 +230,7 @@ export default function InboxPage() {
                           </div>
                        </div>
                        <span className="text-[10px] font-medium text-gray-400">
-                          {new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(conv.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}, {new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                        </span>
                     </div>
                     <div className="flex items-center mt-2 justify-between">
@@ -279,7 +319,7 @@ export default function InboxPage() {
                         <div className={`mt-2 flex items-center justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
                            <Clock className="w-2.5 h-2.5 text-gray-400" />
                            <span className="text-[9px] text-gray-400 font-medium">
-                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {new Date(msg.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}, {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                            </span>
                         </div>
                       </div>
