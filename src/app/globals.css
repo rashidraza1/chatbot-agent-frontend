@@ -46,9 +46,23 @@ nextjs-portal, #nextjs-portal {
   margin-bottom: 0.5rem;
 }
 .markdown-content ol {
-  list-style-type: decimal;
-  margin-left: 1.25rem;
+  list-style-type: none;
+  counter-reset: item;
+  padding-left: 0;
   margin-bottom: 0.5rem;
+}
+.markdown-content ol > li {
+  display: block;
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+.markdown-content ol > li::before {
+  content: counter(item) ") ";
+  counter-increment: item;
+  position: absolute;
+  left: 0;
+  font-weight: inherit;
 }
 .markdown-content li {
   margin-bottom: 0.25rem;
