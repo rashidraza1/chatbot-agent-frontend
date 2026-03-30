@@ -173,27 +173,64 @@ export default function WidgetPage() {
           bot_id,
           conversation_id: conversation?.id,
           user_id: guestId,
-          content
+          content,
+          stream: true
         })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        // Update conversation if it's new
-        if (!conversation) {
-          setConversation({ id: data.conversation_id, title: data.title });
-          fetchHistory(); // Refresh sidebar
-        }
+      if (!res.ok) throw new Error('Failed to send');
 
-        // Replace temp message with real one and add bot response
-        setMessages(prev => {
-          const filtered = prev.filter(m => m.id !== tempUserMsg.id);
-          return [...filtered, data.userMessage, data.botMessage];
-        });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let residual = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const text = residual + chunk;
+        const lines = text.split('\n');
+        
+        // The last element might be an incomplete line
+        residual = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+          
+          const jsonStr = trimmedLine.replace('data: ', '').trim();
+          if (!jsonStr) continue;
+
+          try {
+            const data = JSON.parse(jsonStr);
+            
+            if (data.type === 'start') {
+              // Keep typing active until done
+            } else if (data.type === 'delta') {
+              // Just accumulate on backend/server-side or locally if needed
+              // For now we just wait for 'done' which has the full content
+            } else if (data.type === 'done') {
+              // Update conversation if it's new
+              if (!conversation) {
+                setConversation({ id: data.conversation_id, title: data.title });
+                fetchHistory(); // Refresh sidebar
+              }
+              
+              // Now that we're done, hide typing and show the full messages
+              setIsTyping(false);
+              setMessages(prev => {
+                const filtered = prev.filter(m => m.id !== tempUserMsg.id);
+                return [...filtered, data.userMessage, data.botMessage];
+              });
+            }
+          } catch (e) {
+            console.error("Error parsing SSE line:", jsonStr, e);
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to send message:', err);
-    } finally {
       setIsTyping(false);
     }
   };
