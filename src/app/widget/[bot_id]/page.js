@@ -160,8 +160,13 @@ export default function WidgetPage() {
     setNewMessage('');
     setShowEmojiPicker(false);
 
-    // Optimistically add user message
-    const tempUserMsg = { id: Date.now(), content, sender_type: 'visitor', createdAt: new Date() };
+    const tempUserMsg = {
+      id: Date.now(),
+      content,
+      sender_type: 'visitor',
+      createdAt: new Date()
+    };
+
     setMessages(prev => [...prev, tempUserMsg]);
     setIsTyping(true);
 
@@ -182,7 +187,33 @@ export default function WidgetPage() {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+
+      let accumulatedContent = "";
       let residual = "";
+      let typingQueue = Promise.resolve();
+
+      // ✅ FAST + SMOOTH typing (chunk-based, not character)
+      const typeText = (text) => {
+        typingQueue = typingQueue.then(async () => {
+          const chunkSize = 4; // 🔥 change 3–6 for speed control
+
+          for (let i = 0; i < text.length; i += chunkSize) {
+            accumulatedContent += text.slice(i, i + chunkSize);
+
+            setMessages(prev =>
+              prev.map(m =>
+                m.id === 'streaming-bot'
+                  ? { ...m, content: accumulatedContent }
+                  : m
+              )
+            );
+
+            await new Promise(resolve => setTimeout(resolve, 5)); // 🔥 smooth speed
+          }
+        });
+
+        return typingQueue;
+      };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -191,49 +222,80 @@ export default function WidgetPage() {
         const chunk = decoder.decode(value, { stream: true });
         const text = residual + chunk;
         const lines = text.split('\n');
-        
-        // The last element might be an incomplete line
+
         residual = lines.pop() || "";
 
         for (const line of lines) {
           const trimmedLine = line.trim();
           if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-          
+
           const jsonStr = trimmedLine.replace('data: ', '').trim();
           if (!jsonStr) continue;
 
           try {
             const data = JSON.parse(jsonStr);
-            
+
             if (data.type === 'start') {
-              // Keep typing active until done
-            } else if (data.type === 'delta') {
-              // Just accumulate on backend/server-side or locally if needed
-              // For now we just wait for 'done' which has the full content
-            } else if (data.type === 'done') {
-              // Update conversation if it's new
-              if (!conversation) {
-                setConversation({ id: data.conversation_id, title: data.title });
-                fetchHistory(); // Refresh sidebar
-              }
-              
-              // Now that we're done, hide typing and show the full messages
+              // ignore
+            }
+
+            else if (data.type === 'delta') {
               setIsTyping(false);
+
+              // ✅ create streaming message once
               setMessages(prev => {
-                const filtered = prev.filter(m => m.id !== tempUserMsg.id);
+                const exists = prev.find(m => m.id === 'streaming-bot');
+                if (exists) return prev;
+
+                return [
+                  ...prev,
+                  {
+                    id: 'streaming-bot',
+                    content: '',
+                    sender_type: 'bot',
+                    createdAt: new Date()
+                  }
+                ];
+              });
+
+              await typeText(data.content); // 🔥 smooth typing
+            }
+
+            else if (data.type === 'done') {
+              await typingQueue; // wait until typing completes
+
+              if (!conversation) {
+                setConversation({
+                  id: data.conversation_id,
+                  title: data.title
+                });
+                fetchHistory();
+              }
+
+              setIsTyping(false);
+
+              // ✅ replace temp + streaming with final DB messages
+              setMessages(prev => {
+                const filtered = prev.filter(
+                  m => m.id !== tempUserMsg.id && m.id !== 'streaming-bot'
+                );
+
                 return [...filtered, data.userMessage, data.botMessage];
               });
             }
-          } catch (e) {
-            console.error("Error parsing SSE line:", jsonStr, e);
+
+          } catch (err) {
+            console.error("SSE parse error:", jsonStr, err);
           }
         }
       }
+
     } catch (err) {
       console.error('Failed to send message:', err);
       setIsTyping(false);
     }
   };
+
 
   const toggleVoice = () => {
     if (isListening) {
@@ -413,9 +475,11 @@ export default function WidgetPage() {
                         <div className="markdown-content leading-relaxed">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
-                        <span className={`text-[10px] mt-1 block opacity-50 ${isVisitor ? 'text-right' : 'text-left'}`}>
-                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                        {msg.id !== 'streaming-bot' && (
+                          <span className={`text-[10px] mt-1 block opacity-50 ${isVisitor ? 'text-right' : 'text-left'}`}>
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
