@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useParams } from 'next/navigation';
 import { io } from 'socket.io-client';
 import { Bot, Send, X, AlertCircle, Smile, Mic, MicOff, Maximize2, Minimize2, Minus, History, MessageSquare, Plus, Menu, Search, Trash2 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { marked } from 'marked';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -27,9 +27,15 @@ export default function WidgetPage() {
   const [isListening, setIsListening] = useState(false);
   const [guestId, setGuestId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [accumulatedContent, setAccumulatedContent] = useState("");
 
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
+
+  // ✅ Smooth scroll helper
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const emojis = ['😊', '😂', '😍', '👍', '🙏', '🔥', '👋', '🤔', '🙌', '🎉', '💡', '✨'];
 
@@ -99,7 +105,7 @@ export default function WidgetPage() {
 
     newSocket.on('new_message', (msg) => {
       if (conversation && msg.conversation_id === conversation.id) {
-        setMessages(prev => [...prev, msg]);
+        setMessages(prev => [...prev, { ...msg, content: marked.parse(msg.content) }]);
       }
     });
 
@@ -114,8 +120,11 @@ export default function WidgetPage() {
   }, [isOpen, conversation]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages, isTyping]);
+
+  // ✅ Cursor helper
+  const addCursor = (text) => text + '<span class="animate-pulse font-bold ml-1">▌</span>';
 
   const loadConversation = async (convId) => {
     try {
@@ -123,7 +132,12 @@ export default function WidgetPage() {
       if (res.ok) {
         const data = await res.json();
         setConversation(data.conversation);
-        setMessages(data.messages);
+        // Ensure all historical messages are parsed as markdown if they aren't already
+        const parsedMessages = data.messages.map(msg => ({
+          ...msg,
+          content: marked.parse(msg.content)
+        }));
+        setMessages(parsedMessages);
         if (socket) {
           socket.emit('join_conversation', { conversationId: convId });
         }
@@ -162,7 +176,7 @@ export default function WidgetPage() {
 
     const tempUserMsg = {
       id: Date.now(),
-      content,
+      content: marked.parse(content),
       sender_type: 'visitor',
       createdAt: new Date()
     };
@@ -188,31 +202,24 @@ export default function WidgetPage() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
 
-      let accumulatedContent = "";
       let residual = "";
-      let typingQueue = Promise.resolve();
 
-      // ✅ FAST + SMOOTH typing (chunk-based, not character)
-      const typeText = (text) => {
-        typingQueue = typingQueue.then(async () => {
-          const chunkSize = 4; // 🔥 change 3–6 for speed control
+      // 🔥 ChatGPT-like renderer
+      const renderStream = () => {
+        if (rafRef.current) return;
 
-          for (let i = 0; i < text.length; i += chunkSize) {
-            accumulatedContent += text.slice(i, i + chunkSize);
+        rafRef.current = requestAnimationFrame(() => {
+          const el = document.getElementById("streaming-message");
 
-            setMessages(prev =>
-              prev.map(m =>
-                m.id === 'streaming-bot'
-                  ? { ...m, content: accumulatedContent }
-                  : m
-              )
-            );
-
-            await new Promise(resolve => setTimeout(resolve, 5)); // 🔥 smooth speed
+          if (el) {
+            el.innerHTML =
+              marked.parse(streamingRef.current) +
+              '<span class="animate-pulse ml-1">▌</span>';
           }
-        });
 
-        return typingQueue;
+          scrollToBottom();
+          rafRef.current = null;
+        });
       };
 
       while (true) {
@@ -235,14 +242,10 @@ export default function WidgetPage() {
           try {
             const data = JSON.parse(jsonStr);
 
-            if (data.type === 'start') {
-              // ignore
-            }
-
-            else if (data.type === 'delta') {
+            if (data.type === 'delta') {
               setIsTyping(false);
 
-              // ✅ create streaming message once
+              // ✅ create bot message once
               setMessages(prev => {
                 const exists = prev.find(m => m.id === 'streaming-bot');
                 if (exists) return prev;
@@ -251,41 +254,53 @@ export default function WidgetPage() {
                   ...prev,
                   {
                     id: 'streaming-bot',
-                    content: '',
+                    content: '', // IMPORTANT (no HTML here)
                     sender_type: 'bot',
                     createdAt: new Date()
                   }
                 ];
               });
 
-              await typeText(data.content); // 🔥 smooth typing
+              // 🔥 append text (NO React state)
+              streamingRef.current += data.content;
+
+              // 🔥 smooth render
+              renderStream();
             }
 
             else if (data.type === 'done') {
-              await typingQueue; // wait until typing completes
+              const finalHTML = marked.parse(streamingRef.current);
 
-              if (!conversation) {
-                setConversation({
-                  id: data.conversation_id,
-                  title: data.title
-                });
-                fetchHistory();
-              }
-
-              setIsTyping(false);
-
-              // ✅ replace temp + streaming with final DB messages
               setMessages(prev => {
                 const filtered = prev.filter(
                   m => m.id !== tempUserMsg.id && m.id !== 'streaming-bot'
                 );
 
-                return [...filtered, data.userMessage, data.botMessage];
+                return [
+                  ...filtered,
+                  {
+                    ...data.userMessage,
+                    content: marked.parse(data.userMessage.content)
+                  },
+                  {
+                    ...data.botMessage,
+                    content: finalHTML
+                  }
+                ];
               });
+
+              // reset
+              streamingRef.current = "";
+              setIsTyping(false);
+
+              if (!conversation) {
+                setConversation({ id: data.conversation_id, title: data.title });
+                fetchHistory();
+              }
             }
 
-          } catch (err) {
-            console.error("SSE parse error:", jsonStr, err);
+          } catch (e) {
+            console.error("SSE parse error:", e);
           }
         }
       }
@@ -295,6 +310,7 @@ export default function WidgetPage() {
       setIsTyping(false);
     }
   };
+
 
 
   const toggleVoice = () => {
@@ -472,9 +488,8 @@ export default function WidgetPage() {
                         ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-none shadow-indigo-200 dark:shadow-none'
                         : 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-100 dark:border-gray-700 shadow-sm'
                         }`}>
-                        <div className="markdown-content leading-relaxed">
-                          <ReactMarkdown>{msg.content}</ReactMarkdown>
-                        </div>
+                        <div className="markdown-content leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: msg.content }} />
                         {msg.id !== 'streaming-bot' && (
                           <span className={`text-[10px] mt-1 block opacity-50 ${isVisitor ? 'text-right' : 'text-left'}`}>
                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
