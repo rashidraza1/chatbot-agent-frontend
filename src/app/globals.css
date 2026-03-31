@@ -26,72 +26,114 @@ body {
 }
 
 /* Force hide the Next.js development indicator "N" icon */
-nextjs-portal, #nextjs-portal {
+nextjs-portal,
+#nextjs-portal {
   display: none !important;
 }
 
 /* Markdown Content Styling */
-.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
   font-weight: bold;
   margin-top: 0.5rem;
   margin-bottom: 0.25rem;
 }
-.markdown-content h1 { font-size: 1.25rem; }
-.markdown-content h2 { font-size: 1.125rem; }
-.markdown-content h3 { font-size: 1rem; }
+
+.markdown-content h1 {
+  font-size: 1.25rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.125rem;
+}
+
+.markdown-content h3 {
+  font-size: 1rem;
+}
 
 .markdown-content ul {
   list-style-type: disc;
   margin-left: 1.25rem;
   margin-bottom: 0.5rem;
 }
+
 .markdown-content ol {
   list-style-type: none;
   counter-reset: item;
   padding-left: 0;
   margin-bottom: 0.5rem;
 }
-.markdown-content ol > li {
+
+.markdown-content ol>li {
   display: block;
   position: relative;
   padding-left: 1.5rem;
   margin-bottom: 0.25rem;
 }
-.markdown-content ol > li::before {
+
+.markdown-content ol>li::before {
   content: counter(item) ") ";
   counter-increment: item;
   position: absolute;
   left: 0;
   font-weight: inherit;
 }
+
 .markdown-content li {
   margin-bottom: 0.25rem;
 }
+
 .markdown-content strong {
   font-weight: bold;
 }
+
 .markdown-content em {
   font-style: italic;
 }
+
 .markdown-content p {
   margin-bottom: 0.5rem;
 }
+
 .markdown-content p:last-child {
   margin-bottom: 0;
 }
+
 .markdown-content code {
   background-color: rgba(0, 0, 0, 0.1);
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-family: monospace;
 }
+
 .markdown-content a {
   color: #4f46e5;
   text-decoration: underline;
 }
+
 .dark .markdown-content a {
   color: #818cf8;
 }
+
 .dark .markdown-content code {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+
+.cursor {
+  display: inline-block;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1
+  }
+
+  50% {
+    opacity: 0
+  }
 }

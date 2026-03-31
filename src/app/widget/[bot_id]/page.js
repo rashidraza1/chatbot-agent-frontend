@@ -34,6 +34,8 @@ export default function WidgetPage() {
   const streamingRef = useRef("");
   const rafRef = useRef(null);
 
+
+
   // ✅ Smooth scroll helper
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -205,9 +207,15 @@ export default function WidgetPage() {
       const decoder = new TextDecoder();
 
       let residual = "";
+      let lastRenderTime = 0;
+
+      const FRAME_DELAY = 50; // 🔥 smoothness control
 
       // 🔥 ChatGPT-like renderer
       const renderStream = () => {
+        const now = Date.now();
+
+        if (now - lastRenderTime < FRAME_DELAY) return;
         if (rafRef.current) return;
 
         rafRef.current = requestAnimationFrame(() => {
@@ -216,10 +224,11 @@ export default function WidgetPage() {
           if (el) {
             el.innerHTML =
               marked.parse(streamingRef.current) +
-              '<span class="animate-pulse ml-1">▌</span>';
+              `<span class="cursor ml-1">▌</span>`;
           }
 
           scrollToBottom();
+          lastRenderTime = now;
           rafRef.current = null;
         });
       };
@@ -247,7 +256,7 @@ export default function WidgetPage() {
             if (data.type === 'delta') {
               setIsTyping(false);
 
-              // ✅ create bot message once
+              // ✅ create streaming message once
               setMessages(prev => {
                 const exists = prev.find(m => m.id === 'streaming-bot');
                 if (exists) return prev;
@@ -256,18 +265,18 @@ export default function WidgetPage() {
                   ...prev,
                   {
                     id: 'streaming-bot',
-                    content: '', // IMPORTANT (no HTML here)
+                    content: '',
                     sender_type: 'bot',
                     createdAt: new Date()
                   }
                 ];
               });
 
-              // 🔥 append text (NO React state)
+              // 🔥 append only (no state update)
               streamingRef.current += data.content;
 
               // 🔥 smooth render
-              renderStream();
+              setTimeout(renderStream, 0);
             }
 
             else if (data.type === 'done') {
@@ -312,6 +321,7 @@ export default function WidgetPage() {
       setIsTyping(false);
     }
   };
+
 
 
 
@@ -490,8 +500,14 @@ export default function WidgetPage() {
                         ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-none shadow-indigo-200 dark:shadow-none'
                         : 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-100 dark:border-gray-700 shadow-sm'
                         }`}>
-                        <div className="markdown-content leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: msg.content }} />
+                        {msg.id === 'streaming-bot' ? (
+                          <div id="streaming-message" className="markdown-content leading-relaxed" />
+                        ) : (
+                          <div
+                            className="markdown-content leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: msg.content }}
+                          />
+                        )}
                         {msg.id !== 'streaming-bot' && (
                           <span className={`text-[10px] mt-1 block opacity-50 ${isVisitor ? 'text-right' : 'text-left'}`}>
                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
