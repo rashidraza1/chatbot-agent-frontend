@@ -8,10 +8,9 @@ import { marked } from 'marked';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function WidgetPage() {
-  const params = useParams();
-  const bot_id = params?.bot_id;
-  const searchParams = useSearchParams();
-  const currentUrl = searchParams.get('url') || '';
+  const _botStreamingContent = useRef("");
+  const _botRafId = useRef(null);
+  const streamingMessageRef = useRef(null);
 
   const [botConfig, setBotConfig] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -204,21 +203,21 @@ export default function WidgetPage() {
 
       let residual = "";
 
-      // 🔥 ChatGPT-like renderer
+      // ✅ ChatGPT-like smooth renderer
       const renderStream = () => {
-        if (rafRef.current) return;
+        if (_botRafId.current) return;
 
-        rafRef.current = requestAnimationFrame(() => {
-          const el = document.getElementById("streaming-message");
+        _botRafId.current = requestAnimationFrame(() => {
+          const el = streamingMessageRef.current;
 
           if (el) {
             el.innerHTML =
-              marked.parse(streamingRef.current) +
+              marked.parse(_botStreamingContent.current) +
               '<span class="animate-pulse ml-1">▌</span>';
           }
 
           scrollToBottom();
-          rafRef.current = null;
+          _botRafId.current = null;
         });
       };
 
@@ -245,7 +244,7 @@ export default function WidgetPage() {
             if (data.type === 'delta') {
               setIsTyping(false);
 
-              // ✅ create bot message once
+              // ✅ create streaming message once
               setMessages(prev => {
                 const exists = prev.find(m => m.id === 'streaming-bot');
                 if (exists) return prev;
@@ -254,22 +253,22 @@ export default function WidgetPage() {
                   ...prev,
                   {
                     id: 'streaming-bot',
-                    content: '', // IMPORTANT (no HTML here)
+                    content: '',
                     sender_type: 'bot',
                     createdAt: new Date()
                   }
                 ];
               });
 
-              // 🔥 append text (NO React state)
-              streamingRef.current += data.content;
+              // ✅ append text
+              _botStreamingContent.current += data.content;
 
-              // 🔥 smooth render
+              // ✅ smooth render
               renderStream();
             }
 
             else if (data.type === 'done') {
-              const finalHTML = marked.parse(streamingRef.current);
+              const finalHTML = marked.parse(_botStreamingContent.current);
 
               setMessages(prev => {
                 const filtered = prev.filter(
@@ -289,8 +288,8 @@ export default function WidgetPage() {
                 ];
               });
 
-              // reset
-              streamingRef.current = "";
+              // ✅ reset
+              _botStreamingContent.current = "";
               setIsTyping(false);
 
               if (!conversation) {
@@ -310,6 +309,7 @@ export default function WidgetPage() {
       setIsTyping(false);
     }
   };
+
 
 
 
@@ -488,8 +488,11 @@ export default function WidgetPage() {
                         ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-none shadow-indigo-200 dark:shadow-none'
                         : 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-100 dark:border-gray-700 shadow-sm'
                         }`}>
-                        <div className="markdown-content leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: msg.content }} />
+                        <div
+                          ref={msg.id === 'streaming-bot' ? streamingMessageRef : null}
+                          className="markdown-content leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: msg.content }}
+                        />
                         {msg.id !== 'streaming-bot' && (
                           <span className={`text-[10px] mt-1 block opacity-50 ${isVisitor ? 'text-right' : 'text-left'}`}>
                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
