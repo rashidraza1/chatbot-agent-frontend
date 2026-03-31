@@ -122,18 +122,30 @@ nextjs-portal,
 
 
 .cursor {
-  display: inline-block;
   animation: blink 1s infinite;
 }
 
 @keyframes blink {
 
   0%,
+  50%,
   100% {
-    opacity: 1
+    opacity: 1;
   }
 
-  50% {
-    opacity: 0
+  25%,
+  75% {
+    opacity: 0;
   }
+}
+
+/* ⚡ FIX: Remove ALL Next.js UI */
+nextjs-portal,
+#nextjs-portal,
+[data-nextjs-portal],
+[data-nextjs-portal] * {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }

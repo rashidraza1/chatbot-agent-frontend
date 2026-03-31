@@ -31,14 +31,13 @@ export default function WidgetPage() {
 
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
+
   const streamingRef = useRef("");
   const rafRef = useRef(null);
 
-
-
   // ✅ Smooth scroll helper
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
   const emojis = ['😊', '😂', '😍', '👍', '🙏', '🔥', '👋', '🤔', '🙌', '🎉', '💡', '✨'];
@@ -207,15 +206,15 @@ export default function WidgetPage() {
       const decoder = new TextDecoder();
 
       let residual = "";
-      let lastRenderTime = 0;
+      let uiQueue = [];
 
-      const FRAME_DELAY = 50; // 🔥 smoothness control
+      // 🔥 IMPORTANT: prevent multiple loops
+      if (!window.__isProcessingQueue) {
+        window.__isProcessingQueue = false;
+      }
 
-      // 🔥 ChatGPT-like renderer
+      // ✅ Smooth DOM renderer (FAST)
       const renderStream = () => {
-        const now = Date.now();
-
-        if (now - lastRenderTime < FRAME_DELAY) return;
         if (rafRef.current) return;
 
         rafRef.current = requestAnimationFrame(() => {
@@ -224,13 +223,31 @@ export default function WidgetPage() {
           if (el) {
             el.innerHTML =
               marked.parse(streamingRef.current) +
-              `<span class="cursor ml-1">▌</span>`;
+              '<span class="animate-pulse ml-1 font-bold text-indigo-600">▌</span>';
           }
 
-          scrollToBottom();
-          lastRenderTime = now;
+          scrollToBottom('auto');
           rafRef.current = null;
         });
+      };
+
+      // ✅ Queue processor (GPT feel)
+      const processQueue = async () => {
+        if (window.__isProcessingQueue) return;
+        window.__isProcessingQueue = true;
+
+        while (uiQueue.length > 0) {
+          const chunk = uiQueue.shift();
+
+          // Stream by Stream: append full chunk/delta
+          streamingRef.current += chunk;
+          renderStream();
+
+          // Small stagger for visual smoothness
+          await new Promise(r => setTimeout(r, 10));
+        }
+
+        window.__isProcessingQueue = false;
       };
 
       while (true) {
@@ -253,10 +270,13 @@ export default function WidgetPage() {
           try {
             const data = JSON.parse(jsonStr);
 
+            // =========================
+            // 🔥 DELTA
+            // =========================
             if (data.type === 'delta') {
               setIsTyping(false);
 
-              // ✅ create streaming message once
+              // create streaming message once
               setMessages(prev => {
                 const exists = prev.find(m => m.id === 'streaming-bot');
                 if (exists) return prev;
@@ -272,14 +292,22 @@ export default function WidgetPage() {
                 ];
               });
 
-              // 🔥 append only (no state update)
-              streamingRef.current += data.content;
+              // push chunk
+              uiQueue.push(data.content);
 
-              // 🔥 smooth render
-              setTimeout(renderStream, 0);
+              processQueue();
             }
 
+            // =========================
+            // 🔥 DONE
+            // =========================
             else if (data.type === 'done') {
+
+              // wait until queue empty
+              while (uiQueue.length > 0) {
+                await new Promise(r => setTimeout(r, 10));
+              }
+
               const finalHTML = marked.parse(streamingRef.current);
 
               setMessages(prev => {
@@ -300,12 +328,14 @@ export default function WidgetPage() {
                 ];
               });
 
-              // reset
               streamingRef.current = "";
               setIsTyping(false);
 
               if (!conversation) {
-                setConversation({ id: data.conversation_id, title: data.title });
+                setConversation({
+                  id: data.conversation_id,
+                  title: data.title
+                });
                 fetchHistory();
               }
             }
@@ -321,8 +351,6 @@ export default function WidgetPage() {
       setIsTyping(false);
     }
   };
-
-
 
 
   const toggleVoice = () => {
@@ -500,14 +528,10 @@ export default function WidgetPage() {
                         ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-none shadow-indigo-200 dark:shadow-none'
                         : 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-100 dark:border-gray-700 shadow-sm'
                         }`}>
-                        {msg.id === 'streaming-bot' ? (
-                          <div id="streaming-message" className="markdown-content leading-relaxed" />
-                        ) : (
-                          <div
-                            className="markdown-content leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: msg.content }}
-                          />
-                        )}
+                        <div
+                          id={msg.id === 'streaming-bot' ? 'streaming-message' : undefined}
+                          className="markdown-content leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: msg.content }} />
                         {msg.id !== 'streaming-bot' && (
                           <span className={`text-[10px] mt-1 block opacity-50 ${isVisitor ? 'text-right' : 'text-left'}`}>
                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
