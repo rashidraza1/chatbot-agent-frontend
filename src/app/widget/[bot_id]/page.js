@@ -4,6 +4,7 @@ import { useSearchParams, useParams } from 'next/navigation';
 import { io } from 'socket.io-client';
 import { Bot, Send, X, AlertCircle, Smile, Mic, MicOff, Maximize2, Minimize2, Minus, History, MessageSquare, Plus, Menu, Search, Trash2 } from 'lucide-react';
 import { marked } from 'marked';
+import api from '@/utils/api';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -42,20 +43,15 @@ export default function WidgetPage() {
 
   const emojis = ['😊', '😂', '😍', '👍', '🙏', '🔥', '👋', '🤔', '🙌', '🎉', '💡', '✨'];
 
-  // Initialize Guest ID and load history
+  // Guest ID and token management is now handled by the api utility
   useEffect(() => {
-    let gid = localStorage.getItem('chatdesk_guest_id');
-    if (!gid) {
-      gid = crypto.randomUUID();
-      localStorage.setItem('chatdesk_guest_id', gid);
-    }
-    setGuestId(gid);
+    // No-op: api.js automatically handles guest token creation
   }, []);
 
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/bots/${bot_id}/widget`);
+        const res = await api.fetchWithAuth(`/api/bots/${bot_id}/widget`);
         if (res.ok) {
           const data = await res.json();
           setBotConfig(data);
@@ -69,10 +65,8 @@ export default function WidgetPage() {
 
   // Fetch History
   const fetchHistory = async () => {
-    if (!bot_id || !guestId) return;
     try {
-      // For now, we use guestId as user_id for simplicity in guest mode
-      const res = await fetch(`${API_BASE}/api/chat/conversations?bot_id=${bot_id}&user_id=${guestId}`);
+      const res = await api.fetchWithAuth(`/api/chat/conversations?bot_id=${bot_id}`);
       if (res.ok) {
         const data = await res.json();
         setHistory(data);
@@ -84,7 +78,7 @@ export default function WidgetPage() {
 
   useEffect(() => {
     if (isOpen) fetchHistory();
-  }, [isOpen, bot_id, guestId]);
+  }, [isOpen, bot_id]);
 
   useEffect(() => {
     // Notify parent window to resize iframe
@@ -130,7 +124,7 @@ export default function WidgetPage() {
 
   const loadConversation = async (convId) => {
     try {
-      const res = await fetch(`${API_BASE}/api/chat/conversations/${convId}`);
+      const res = await api.fetchWithAuth(`/api/chat/conversations/${convId}`);
       if (res.ok) {
         const data = await res.json();
         setConversation(data.conversation);
@@ -158,7 +152,7 @@ export default function WidgetPage() {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this chat?')) return;
     try {
-      const res = await fetch(`${API_BASE}/api/chat/conversations/${convId}`, { method: 'DELETE' });
+      const res = await api.fetchWithAuth(`/api/chat/conversations/${convId}`, { method: 'DELETE' });
       if (res.ok) {
         setHistory(prev => prev.filter(c => c.id !== convId));
         if (conversation?.id === convId) startNewChat();
@@ -187,13 +181,12 @@ export default function WidgetPage() {
     setIsTyping(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/chat`, {
+      const res = await api.fetchWithAuth(`/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bot_id,
           conversation_id: conversation?.id,
-          user_id: guestId,
           content,
           stream: true
         })
