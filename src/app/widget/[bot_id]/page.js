@@ -358,6 +358,11 @@ export default function WidgetPage() {
   };
 
 
+  const handleEmojiClick = (emoji) => {
+    setNewMessage(prev => prev + emoji);
+    // Keep the picker open for multiple emojis
+  };
+
   const toggleVoice = () => {
     if (isListening) {
       recognitionRef.current?.stop();
@@ -482,7 +487,7 @@ export default function WidgetPage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-lg leading-tight truncate">{botConfig.name}</h3>
+                    <h3 className="text-lg leading-tight truncate" style={{ fontFamily: '"Trade Gothic", sans-serif' }}>{botConfig.name}</h3>
                     <p className="text-xs text-white text-opacity-80 flex items-center">
                       <span className="w-2 h-2 rounded-full bg-green-400 mr-1 animate-pulse"></span> Online
                     </p>
@@ -530,9 +535,9 @@ export default function WidgetPage() {
                   return (
                     <div key={idx} className={`flex ${isVisitor ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
                       <div className={`max-w-[85%] rounded-[20px] px-5 py-3.5 shadow-sm text-sm ${isVisitor
-                        ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-none shadow-indigo-200 dark:shadow-none'
+                        ? 'text-white rounded-tr-none shadow-indigo-200 dark:shadow-none'
                         : 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-100 dark:border-gray-700 shadow-sm'
-                        }`}>
+                        }`} style={{ backgroundColor: isVisitor ? (botConfig.color_theme || '#4f46e5') : undefined }}>
                         <div
                           id={msg.id === 'streaming-bot' ? 'streaming-message' : undefined}
                           className="markdown-content leading-relaxed"
@@ -560,6 +565,23 @@ export default function WidgetPage() {
 
               {/* Input Area */}
               <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 relative rounded-b-2xl">
+                {/* Emoji Picker Popup */}
+                {showEmojiPicker && (
+                  <div className="absolute bottom-full left-4 mb-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-50 flex flex-wrap gap-1 w-[280px] animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <div className="grid grid-cols-6 gap-1 w-full">
+                      {emojis.map((emoji, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleEmojiClick(emoji)}
+                          className="flex items-center justify-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-110 active:scale-95 text-xl"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex items-center space-x-3 w-full">
                   <div className="flex-1 flex items-center bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl px-2 focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all min-w-0">
                     <button
@@ -597,8 +619,8 @@ export default function WidgetPage() {
                   </button>
                 </form>
                 <div className="flex items-center justify-center mt-3">
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium tracking-wide">
-                    POWERED BY <a href="https://rsiconcepts.com" target="_blank" className="hover:text-indigo-500 transition-colors">RSI CONCEPTS</a>
+                  <span className="text-[12px] text-gray-400 dark:text-gray-500 font-medium tracking-wide" style={{ fontFamily: '"Trade Gothic", sans-serif' }}>
+                    Powered by <a href="https://rsiconcepts.com" target="_blank" className="hover:text-indigo-500 transition-colors font-bold" style={{ color: botConfig.color_theme || '#4f46e5' }}>RSI Concepts</a>
                   </span>
                 </div>
               </div>
