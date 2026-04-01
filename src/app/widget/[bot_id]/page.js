@@ -126,8 +126,7 @@ export default function WidgetPage() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // ✅ Cursor helper
-  const addCursor = (text) => text + '<span class="animate-pulse font-bold ml-1">▌</span>';
+  // Removed addCursor helper
 
   const loadConversation = async (convId) => {
     try {
@@ -221,9 +220,7 @@ export default function WidgetPage() {
           const el = document.getElementById("streaming-message");
 
           if (el) {
-            el.innerHTML =
-              marked.parse(streamingRef.current) +
-              '<span class="animate-pulse ml-1 font-bold text-indigo-600">▌</span>';
+            el.innerHTML = marked.parse(streamingRef.current);
           }
 
           scrollToBottom('auto');
@@ -238,13 +235,28 @@ export default function WidgetPage() {
 
         while (uiQueue.length > 0) {
           const chunk = uiQueue.shift();
+          if (!chunk) continue;
 
-          // Stream by Stream: append full chunk/delta
-          streamingRef.current += chunk;
-          renderStream();
+          // Process each character for maximum smoothness
+          for (let i = 0; i < chunk.length; i++) {
+            const char = chunk[i];
+            streamingRef.current += char;
+            renderStream();
 
-          // Small stagger for visual smoothness
-          await new Promise(r => setTimeout(r, 10));
+            // Dynamic delay based on punctuation
+            let delay = 10;
+            if (char === '.' || char === '!' || char === '?') {
+              delay = 200; // Longer pause for end of sentence
+            } else if (char === ',' || char === ';' || char === ':') {
+              delay = 100; // Medium pause for transition
+            } else if (char === '\n') {
+              delay = 150; // Pause for new lines
+            }
+
+            // Stagger typing speed slightly for realism
+            const jitter = Math.random() * 5;
+            await new Promise(r => setTimeout(r, delay + jitter));
+          }
         }
 
         window.__isProcessingQueue = false;
