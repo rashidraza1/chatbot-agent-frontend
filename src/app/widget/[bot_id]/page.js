@@ -497,11 +497,23 @@ export default function WidgetPage() {
                 </div>
                 <div className="flex items-center space-x-1 shrink-0">
                   <button
+                    onClick={() => {
+                      setIsSidebarOpen(!isSidebarOpen);
+                      if (!isMaximized && !isSidebarOpen) {
+                        setIsMaximized(true); // Auto-maximize if opening history from minimized state
+                      }
+                    }}
+                    className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                    title="Chat History"
+                  >
+                    <History size={18} />
+                  </button>
+                  <button
                     onClick={() => setIsMaximized(!isMaximized)}
                     className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                    title={isMaximized ? "Restore" : "Chat History"}
+                    title={isMaximized ? "Restore" : "Maximize"}
                   >
-                    {isMaximized ? <Minimize2 size={18} /> : <History size={18} />}
+                    {isMaximized ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
