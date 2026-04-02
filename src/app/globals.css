@@ -149,3 +149,68 @@ nextjs-portal,
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+
+@media (max-width: 640px) {
+
+
+
+  .widget-container {
+    padding: 0 !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  .widget-main,
+  .widget-chat-pane,
+  .widget-header,
+  .widget-input-area {
+    width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  .widget-chat-pane {
+    height: auto !important;
+  }
+
+  .widget-header {
+    height: 4rem !important;
+  }
+
+  .widget-input-area {
+    height: auto !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .widget-container {
+    padding: 0 !important;
+  }
+
+  .widget-main,
+  .widget-chat-pane,
+  .widget-header,
+  .widget-input-area {
+    width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+  }
+
+  .widget-chat-pane {
+    height: auto !important;
+  }
+
+  .widget-header {
+    height: 4rem !important;
+  }
+
+  .widget-input-area {
+    height: auto !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+}

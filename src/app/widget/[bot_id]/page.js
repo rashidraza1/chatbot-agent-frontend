@@ -409,6 +409,8 @@ export default function WidgetPage() {
   );
 
   return (
+
+
     <div className="fixed inset-0 pointer-events-none flex flex-col justify-end items-end-1 pb-5 pr-5 font-sans">
       {isOpen ? (
         <div className={`pointer-events-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 transition-all duration-500 transform scale-100 origin-bottom-right ${isMaximized ? 'w-[95vw] h-[90vh] max-w-[1200px]' : 'h-[600px] w-[380px]'}`}>
@@ -487,7 +489,7 @@ export default function WidgetPage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-lg leading-tight truncate" style={{ fontFamily: '"Trade Gothic", sans-serif' }}>{botConfig.name}</h3>
+                    <h3 className="leading-tight truncate" style={{ fontFamily: "'Trade Gothic', sans-serif", fontSize: '18px', letterSpacing: '0.5px', textShadow: '1px 1px 0 #999, 2px 2px 0 #888, 3px 3px 0 #777, 4px 4px 0 #666, 5px 5px 8px rgba(0, 0, 0, 0.3)' }}>{botConfig.name}</h3>
                     <p className="text-xs text-white text-opacity-80 flex items-center">
                       <span className="w-2 h-2 rounded-full bg-green-400 mr-1 animate-pulse"></span> Online
                     </p>
@@ -619,8 +621,8 @@ export default function WidgetPage() {
                   </button>
                 </form>
                 <div className="flex items-center justify-center mt-3">
-                  <span className="text-[12px] text-gray-400 dark:text-gray-500 font-medium tracking-wide" style={{ fontFamily: '"Trade Gothic", sans-serif' }}>
-                    Powered by <a href="https://rsiconcepts.com" target="_blank" className="hover:text-indigo-500 transition-colors font-bold" style={{ color: botConfig.color_theme || '#4f46e5' }}>RSI Concepts</a>
+                  <span className="tracking-wide" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '13px', color: '#666', marginTop: '2px', display: 'inline-block' }}>
+                    Powered by <a href="https://rsiconcepts.com" target="_blank" className="hover:text-indigo-500 transition-colors" style={{ color: botConfig.color_theme || '#4f46e5', fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '14px', marginTop: '2px', letterSpacing: '0px', display: 'inline-block' }}>RSI Concepts</a>
                   </span>
                 </div>
               </div>
@@ -640,6 +642,9 @@ export default function WidgetPage() {
             <Bot size={28} />
           )}
         </button>
+
+
+
       )}
     </div>
   );
