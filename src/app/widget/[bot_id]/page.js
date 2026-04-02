@@ -523,7 +523,9 @@ export default function WidgetPage() {
                 {messages.length === 0 && !isTyping && (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60">
                     <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center shadow-sm">
-                      <img src="/rsi-logo.svg" alt="RSI Logo" className="w-12 h-12 object-contain" />
+                      {/* <img src="/rsi-logo.svg" alt="RSI Logo" className="w-12 h-12 object-contain" />
+                     */}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bot" aria-hidden="true"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800 dark:text-gray-200">How can I help you today?</h4>
