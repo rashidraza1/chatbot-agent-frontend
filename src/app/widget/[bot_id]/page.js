@@ -411,7 +411,7 @@ export default function WidgetPage() {
   return (
 
 
-    <div className="fixed inset-0 pointer-events-none flex flex-col justify-end items-end-1 pb-5 pr-5 font-sans">
+    <div className="fixed inset-0 pointer-events-none flex flex-col justify-end items-end-1 pb-5 pr-5 font-sans" style={{ padding: '0px' }}>
       {isOpen ? (
         <div className={`pointer-events-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 transition-all duration-500 transform scale-100 origin-bottom-right ${isMaximized ? 'w-[95vw] h-[90vh] max-w-[1200px]' : 'h-[600px] w-[380px]'}`}>
 
@@ -489,7 +489,7 @@ export default function WidgetPage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="leading-tight truncate" style={{ fontFamily: "'Trade Gothic', sans-serif", fontSize: '18px', letterSpacing: '0.5px', textShadow: '1px 1px 0 #999, 2px 2px 0 #888, 3px 3px 0 #777, 4px 4px 0 #666, 5px 5px 8px rgba(0, 0, 0, 0.3)' }}>{botConfig.name}</h3>
+                    <h4 className="font-semibold text-gray-800 dark:text-gray-200" style={{ color: 'white' }}>{botConfig.name}</h4>
                     <p className="text-xs text-white text-opacity-80 flex items-center">
                       <span className="w-2 h-2 rounded-full bg-green-400 mr-1 animate-pulse"></span> Online
                     </p>
@@ -634,7 +634,7 @@ export default function WidgetPage() {
         <button
           onClick={() => setIsOpen(true)}
           className="pointer-events-auto rounded-full w-14 h-14 shadow-2xl flex items-center justify-center hover:scale-110 transition-all duration-200 text-white overflow-hidden"
-          style={{ backgroundColor: botConfig.color_theme || '#4f46e5' }}
+          style={{ backgroundColor: botConfig.color_theme || '#4f46e5', margin: 'auto' }}
         >
           {botConfig.avatar_url ? (
             <img src={botConfig.avatar_url} alt="Open Chat" className="w-full h-full object-cover" />
