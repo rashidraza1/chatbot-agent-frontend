@@ -485,7 +485,7 @@ export default function WidgetPage() {
                     {botConfig.avatar_url ? (
                       <img src={botConfig.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
-                      <Bot size={24} style={{ color: botConfig.color_theme || '#4f46e5' }} />
+                      <img src="/rsi-logo.svg" alt="RSI Logo" className="w-full h-full object-contain p-1" />
                     )}
                   </div>
                   <div className="min-w-0">
@@ -523,7 +523,7 @@ export default function WidgetPage() {
                 {messages.length === 0 && !isTyping && (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60">
                     <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center shadow-sm">
-                      <Bot size={32} style={{ color: botConfig.color_theme || '#4f46e5' }} />
+                      <img src="/rsi-logo.svg" alt="RSI Logo" className="w-12 h-12 object-contain" />
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800 dark:text-gray-200">How can I help you today?</h4>
@@ -639,7 +639,7 @@ export default function WidgetPage() {
           {botConfig.avatar_url ? (
             <img src={botConfig.avatar_url} alt="Open Chat" className="w-full h-full object-cover" />
           ) : (
-            <Bot size={28} />
+            <img src="/rsi-logo.svg" alt="RSI Logo" className="w-3/4 h-3/4 object-contain brightness-0 invert opacity-90" />
           )}
         </button>
 

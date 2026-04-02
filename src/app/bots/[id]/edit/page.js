@@ -19,7 +19,10 @@ export default function EditBotPage() {
     color_theme: '#4f46e5',
     use_ai: true,
     faqs: [],
-    prompt: ''
+    prompt: '',
+    workflow_id: '',
+    vector_id: '',
+    openai_key: ''
   });
 
   // PDF Management State
@@ -56,7 +59,10 @@ export default function EditBotPage() {
           color_theme: bot.color_theme || '#4f46e5',
           use_ai: bot.use_ai !== undefined ? bot.use_ai : true,
           faqs: parsedFaqs,
-          prompt: bot.prompt || ''
+          prompt: bot.prompt || '',
+          workflow_id: bot.workflow_id || '',
+          vector_id: bot.vector_id || '',
+          openai_key: bot.openai_key || ''
         });
       } catch (err) {
         console.error('Failed to load bot:', err);
@@ -272,6 +278,50 @@ export default function EditBotPage() {
                      </label>
                    </div>
                 </div>
+                {formData.use_ai && (
+                  <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6 border-t border-gray-100 dark:border-gray-700 pt-6">
+                    <div className="sm:col-span-3">
+                      <label htmlFor="workflow_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Workflow ID</label>
+                      <div className="mt-1">
+                        <input
+                          type="text"
+                          name="workflow_id"
+                          id="workflow_id"
+                          value={formData.workflow_id || ''}
+                          onChange={handleChange}
+                          className="shadow-sm focus:ring-indigo-500 py-3 px-3 border border-gray-300 dark:border-gray-600 bg-transparent dark:text-white focus:border-indigo-500 block w-full sm:text-sm rounded-md"
+                        />
+                      </div>
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label htmlFor="vector_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Vector ID</label>
+                      <div className="mt-1">
+                        <input
+                          type="text"
+                          name="vector_id"
+                          id="vector_id"
+                          value={formData.vector_id || ''}
+                          onChange={handleChange}
+                          className="shadow-sm focus:ring-indigo-500 py-3 px-3 border border-gray-300 dark:border-gray-600 bg-transparent dark:text-white focus:border-indigo-500 block w-full sm:text-sm rounded-md"
+                        />
+                      </div>
+                    </div>
+                    <div className="sm:col-span-6">
+                      <label htmlFor="openai_key" className="block text-sm font-medium text-gray-700 dark:text-gray-300">OpenAI API Key</label>
+                      <div className="mt-1">
+                        <input
+                          type="password"
+                          name="openai_key"
+                          id="openai_key"
+                          value={formData.openai_key || ''}
+                          onChange={handleChange}
+                          placeholder="sk-..."
+                          className="shadow-sm focus:ring-indigo-500 py-3 px-3 border border-gray-300 dark:border-gray-600 bg-transparent dark:text-white focus:border-indigo-500 block w-full sm:text-sm rounded-md"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
              </div>
 
              <div className="pt-8 border-t border-gray-200 dark:border-gray-700">
