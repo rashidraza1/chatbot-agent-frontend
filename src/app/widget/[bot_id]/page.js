@@ -639,7 +639,7 @@ export default function WidgetPage() {
           {botConfig.avatar_url ? (
             <img src={botConfig.avatar_url} alt="Open Chat" className="w-full h-full object-cover" />
           ) : (
-            <img src="/rsi-logo.svg" alt="RSI Logo" className="w-3/4 h-3/4 object-contain brightness-0 invert opacity-90" />
+            <Bot size={28} />
           )}
         </button>
 
