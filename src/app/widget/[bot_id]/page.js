@@ -146,6 +146,7 @@ export default function WidgetPage() {
   const startNewChat = () => {
     setConversation(null);
     setMessages([]);
+    setIsMaximized(false);
   };
 
   const handleDeleteConversation = async (e, convId) => {
