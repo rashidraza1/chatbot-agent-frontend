@@ -419,7 +419,7 @@ export default function WidgetPage() {
           <div className="flex flex-1 overflow-hidden relative">
 
             {/* Sidebar (History) - Only visible in maximized mode or if explicitly toggled */}
-            <div className={`bg-gray-50 dark:bg-gray-950 flex flex-col transition-all duration-300 rounded-l-2xl ${isMaximized && isSidebarOpen ? 'w-72 border-r border-gray-200 dark:border-gray-800' : 'w-0 overflow-hidden border-none'}`}>
+            <div className={`bg-gray-50 dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300 rounded-l-2xl ${isMaximized && isSidebarOpen ? 'w-72' : 'w-0 overflow-hidden'}`}>
               <div className="p-2 flex flex-col h-full uppercase">
                 <button
                   onClick={startNewChat}
@@ -473,9 +473,9 @@ export default function WidgetPage() {
                 style={{ backgroundColor: botConfig.color_theme || '#4f46e5' }}
               >
                 <div className="flex items-center space-x-3">
-                  {isMaximized && isSidebarOpen && (
+                  {isMaximized && (
                     <button
-                      onClick={() => setIsSidebarOpen(false)}
+                      onClick={() => setIsMaximized(false)}
                       className="p-1.5 hover:bg-white/20 rounded-lg transition-colors mr-1"
                     >
                       <Menu size={20} />
@@ -509,7 +509,11 @@ export default function WidgetPage() {
                     <History size={18} />
                   </button>
                   <button
-                    onClick={() => setIsMaximized(!isMaximized)}
+                    onClick={() => {
+                      const nextMax = !isMaximized;
+                      setIsMaximized(nextMax);
+                      if (nextMax) setIsSidebarOpen(true);
+                    }}
                     className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
                     title={isMaximized ? "Restore" : "Maximize"}
                   >
