@@ -411,16 +411,16 @@ export default function WidgetPage() {
   return (
 
 
-    <div className="fixed inset-0 pointer-events-none flex flex-col justify-end items-end-1 pb-5 pr-5 font-sans" style={{ padding: '0px' }}>
+    <div className="fixed inset-0 pointer-events-none flex flex-col justify-end items-center sm:items-end font-sans" style={{ padding: '0px' }}>
       {isOpen ? (
-        <div className={`pointer-events-auto bg-white dark:bg-gray-900 rounded-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 transition-all duration-500 transform scale-100 origin-bottom-right ${isMaximized ? 'w-[95vw] h-[90vh] max-w-[1200px]' : 'h-[600px] w-[380px]'}`}>
+        <div className={`pointer-events-auto bg-white dark:bg-gray-900 rounded-none sm:rounded-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 transition-all duration-500 transform scale-100 origin-bottom sm:origin-bottom-right ${isMaximized ? 'w-[95vw] h-[90vh] max-w-[1200px]' : 'h-[100svh] sm:h-[600px] w-full sm:w-[380px]'}`}>
 
           {/* Main Layout Container */}
           <div className="flex flex-1 overflow-hidden relative">
 
             {/* Sidebar (History) - Only visible in maximized mode or if explicitly toggled */}
-            <div className={`bg-gray-50 dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300 rounded-l-2xl ${isMaximized && isSidebarOpen ? 'w-72' : 'w-0 overflow-hidden'}`}>
-              <div className="p-4 flex flex-col h-full uppercase">
+            <div className={`bg-gray-50 dark:bg-gray-950 flex flex-col transition-all duration-300 rounded-l-2xl ${isMaximized && isSidebarOpen ? 'w-72 border-r border-gray-200 dark:border-gray-800' : 'w-0 overflow-hidden border-none'}`}>
+              <div className="p-2 flex flex-col h-full uppercase">
                 <button
                   onClick={startNewChat}
                   className="flex items-center justify-center space-x-2 w-full py-2.5 px-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-all mb-4"
@@ -469,13 +469,13 @@ export default function WidgetPage() {
 
               {/* Header */}
               <div
-                className="p-4 flex items-center justify-between shadow-sm text-white relative h-16 shrink-0 rounded-t-2xl md:rounded-tl-none"
+                className="p-2 flex items-center justify-between shadow-sm text-white relative h-16 shrink-0 rounded-t-2xl md:rounded-tl-none"
                 style={{ backgroundColor: botConfig.color_theme || '#4f46e5' }}
               >
                 <div className="flex items-center space-x-3">
-                  {isMaximized && (
+                  {isMaximized && isSidebarOpen && (
                     <button
-                      onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                      onClick={() => setIsSidebarOpen(false)}
                       className="p-1.5 hover:bg-white/20 rounded-lg transition-colors mr-1"
                     >
                       <Menu size={20} />
@@ -531,7 +531,7 @@ export default function WidgetPage() {
               </div>
 
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-6 bg-[#f8f9fc] dark:bg-gray-900 space-y-6">
+              <div className="flex-1 overflow-y-auto p-3 bg-[#f8f9fc] dark:bg-gray-900 space-y-6">
                 {messages.length === 0 && !isTyping && (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60">
                     <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center shadow-sm">
@@ -580,7 +580,7 @@ export default function WidgetPage() {
               </div>
 
               {/* Input Area */}
-              <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 relative rounded-b-2xl">
+              <div className="p-2 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 relative rounded-b-2xl">
                 {/* Emoji Picker Popup */}
                 {showEmojiPicker && (
                   <div className="absolute bottom-full left-4 mb-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl z-50 flex flex-wrap gap-1 w-[280px] animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -590,7 +590,7 @@ export default function WidgetPage() {
                           key={idx}
                           type="button"
                           onClick={() => handleEmojiClick(emoji)}
-                          className="flex items-center justify-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-110 active:scale-95 text-xl"
+                          className="flex items-center justify-center p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-110 active:scale-95 text-xl"
                         >
                           {emoji}
                         </button>
@@ -603,7 +603,7 @@ export default function WidgetPage() {
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className={`p-2 rounded-full transition-colors shrink-0 ${showEmojiPicker ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'text-gray-400 hover:text-gray-600'}`}
+                      className={`p-1 rounded-full transition-colors shrink-0 ${showEmojiPicker ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'text-gray-400 hover:text-gray-600'}`}
                     >
                       <Smile size={20} />
                     </button>
@@ -619,7 +619,7 @@ export default function WidgetPage() {
                     <button
                       type="button"
                       onClick={toggleVoice}
-                      className={`p-2 rounded-full transition-all shrink-0 ${isListening ? 'text-white bg-red-500 shadow-lg animate-pulse' : 'text-gray-400 hover:text-gray-600'}`}
+                      className={`p-1 rounded-full transition-all shrink-0 ${isListening ? 'text-white bg-red-500 shadow-lg animate-pulse' : 'text-gray-400 hover:text-gray-600'}`}
                     >
                       {isListening ? <MicOff size={20} /> : <Mic size={20} />}
                     </button>
