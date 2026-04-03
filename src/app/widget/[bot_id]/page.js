@@ -413,7 +413,7 @@ export default function WidgetPage() {
 
     <div className="fixed inset-0 pointer-events-none flex flex-col justify-end items-end-1 pb-5 pr-5 font-sans" style={{ padding: '0px' }}>
       {isOpen ? (
-        <div className={`pointer-events-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 transition-all duration-500 transform scale-100 origin-bottom-right ${isMaximized ? 'w-[95vw] h-[90vh] max-w-[1200px]' : 'h-[600px] w-[380px]'}`}>
+        <div className={`pointer-events-auto bg-white dark:bg-gray-900 rounded-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 transition-all duration-500 transform scale-100 origin-bottom-right ${isMaximized ? 'w-[95vw] h-[90vh] max-w-[1200px]' : 'h-[600px] w-[380px]'}`}>
 
           {/* Main Layout Container */}
           <div className="flex flex-1 overflow-hidden relative">
@@ -583,7 +583,7 @@ export default function WidgetPage() {
               <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 relative rounded-b-2xl">
                 {/* Emoji Picker Popup */}
                 {showEmojiPicker && (
-                  <div className="absolute bottom-full left-4 mb-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-50 flex flex-wrap gap-1 w-[280px] animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="absolute bottom-full left-4 mb-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl z-50 flex flex-wrap gap-1 w-[280px] animate-in fade-in slide-in-from-bottom-2 duration-200">
                     <div className="grid grid-cols-6 gap-1 w-full">
                       {emojis.map((emoji, idx) => (
                         <button
@@ -647,7 +647,7 @@ export default function WidgetPage() {
       ) : (
         <button
           onClick={() => setIsOpen(true)}
-          className="pointer-events-auto rounded-full w-14 h-14 shadow-2xl flex items-center justify-center hover:scale-110 transition-all duration-200 text-white overflow-hidden"
+          className="pointer-events-auto rounded-full w-14 h-14 flex items-center justify-center hover:scale-110 transition-all duration-200 text-white overflow-hidden"
           style={{ backgroundColor: botConfig.color_theme || '#4f46e5', margin: 'auto' }}
         >
           {botConfig.avatar_url ? (
