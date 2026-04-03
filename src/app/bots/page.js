@@ -130,7 +130,7 @@ export default function BotsPage() {
         {/* Embed Modal */}
         {showEmbedModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in duration-200">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in duration-200">
               <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">Install Chatbot</h3>
                 <button onClick={() => setShowEmbedModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">

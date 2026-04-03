@@ -30,6 +30,20 @@ export default function WidgetPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [accumulatedContent, setAccumulatedContent] = useState("");
 
+  const [isLeadCaptured, setIsLeadCaptured] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('lead_captured') === 'true';
+    }
+    return false;
+  });
+  const [leadForm, setLeadForm] = useState({ name: '', email: '', mobile_number: '' });
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false);
+  const [leadError, setLeadError] = useState('');
+
+  // Lead capture restriction (Bot ID 4 for now, can be set to 'all' later)
+  const collectLeadsFor = ['4']; 
+  const shouldShowLeadForm = !isLeadCaptured && (collectLeadsFor.includes('all') || collectLeadsFor.includes(String(bot_id)));
+
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -137,6 +151,9 @@ export default function WidgetPage() {
         if (socket) {
           socket.emit('join_conversation', { conversationId: convId });
         }
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+          setIsMaximized(false);
+        }
       }
     } catch (err) {
       console.error('Failed to load conversation:', err);
@@ -146,7 +163,9 @@ export default function WidgetPage() {
   const startNewChat = () => {
     setConversation(null);
     setMessages([]);
-    setIsMaximized(false);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsMaximized(false);
+    }
   };
 
   const handleDeleteConversation = async (e, convId) => {
@@ -160,6 +179,37 @@ export default function WidgetPage() {
       }
     } catch (err) {
       console.error('Failed to delete conversation:', err);
+    }
+  };
+
+  const handleLeadSubmit = async (e) => {
+    e.preventDefault();
+    if (!leadForm.name || (!leadForm.email && !leadForm.mobile_number)) {
+      setLeadError('Please provide your name and at least an email or mobile number.');
+      return;
+    }
+    
+    setIsSubmittingLead(true);
+    setLeadError('');
+    
+    try {
+      const res = await api.fetchWithAuth('/api/auth/guest/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(leadForm)
+      });
+      
+      if (res.ok) {
+        localStorage.setItem('lead_captured', 'true');
+        setIsLeadCaptured(true);
+      } else {
+        const data = await res.json();
+        setLeadError(data.message || 'Failed to capture details. Please try again.');
+      }
+    } catch (err) {
+      setLeadError('Network error. Please try again.');
+    } finally {
+      setIsSubmittingLead(false);
     }
   };
 
@@ -465,7 +515,7 @@ export default function WidgetPage() {
               </div>
             </div>
 
-            {/* Chat Pane */}
+            {/* Chat Pane & Pre-Chat Form Container */}
             <div className="flex-1 flex flex-col relative bg-white dark:bg-gray-900 rounded-r-2xl">
 
               {/* Header */}
@@ -499,9 +549,11 @@ export default function WidgetPage() {
                 <div className="flex items-center space-x-1 shrink-0">
                   <button
                     onClick={() => {
-                      setIsSidebarOpen(!isSidebarOpen);
-                      if (!isMaximized && !isSidebarOpen) {
-                        setIsMaximized(true); // Auto-maximize if opening history from minimized state
+                      if (!isMaximized) {
+                        setIsMaximized(true);
+                        setIsSidebarOpen(true);
+                      } else {
+                        setIsSidebarOpen(!isSidebarOpen);
                       }
                     }}
                     className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
@@ -645,6 +697,63 @@ export default function WidgetPage() {
                   </span>
                 </div>
               </div>
+
+            {shouldShowLeadForm && (
+              <div className="absolute inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-6 animate-in fade-in duration-300 rounded-r-2xl">
+                <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg mb-6 shadow-indigo-500/30">
+                  <MessageSquare size={32} className="text-white" />
+                </div>
+                <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 mb-2">Welcome! 👋</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-center mb-8 max-w-xs text-sm">Please introduce yourself to start chatting with us.</p>
+                
+                <form onSubmit={handleLeadSubmit} className="w-full max-w-sm space-y-4">
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Your Full Name"
+                      value={leadForm.name}
+                      onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
+                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <input
+                      type="email"
+                      placeholder="Email Address"
+                      value={leadForm.email}
+                      onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
+                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <input
+                      type="tel"
+                      placeholder="Mobile Number (Optional if Email provided)"
+                      value={leadForm.mobile_number}
+                      onChange={(e) => setLeadForm({ ...leadForm, mobile_number: e.target.value })}
+                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm outline-none"
+                    />
+                  </div>
+                  
+                  {leadError && (
+                    <div className="text-red-500 text-xs text-center font-medium bg-red-50 dark:bg-red-500/10 py-2 rounded-lg border border-red-100 dark:border-red-500/20 flex items-center justify-center space-x-1.5">
+                      <AlertCircle size={14} />
+                      <span>{leadError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSubmittingLead || !leadForm.name || (!leadForm.email && !leadForm.mobile_number)}
+                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center font-medium disabled:opacity-50 disabled:shadow-none hover:scale-[1.02] active:scale-[0.98]"
+                    style={{ backgroundColor: botConfig.color_theme || '#4f46e5' }}
+                  >
+                    {isSubmittingLead ? 'Starting Chat...' : 'Start Chat'}
+                  </button>
+                </form>
+              </div>
+            )}
 
             </div>
           </div>

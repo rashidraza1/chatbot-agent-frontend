@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import Cookies from 'js-cookie';
-import { Bot, Inbox, LayoutDashboard, Settings, LogOut } from 'lucide-react';
+import { Bot, Inbox, LayoutDashboard, Settings, LogOut, Users } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
@@ -27,6 +27,7 @@ export default function DashboardLayout({ children }) {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Inbox', href: '/inbox', icon: Inbox },
     { name: 'Chatbots', href: '/bots', icon: Bot },
+    { name: 'Leads', href: '/leads', icon: Users },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
