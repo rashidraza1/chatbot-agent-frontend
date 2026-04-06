@@ -108,7 +108,7 @@ nextjs-portal,
 }
 
 .markdown-content a {
-  color: #4f46e5;
+  color: #fff;
   text-decoration: underline;
 }
 
@@ -123,6 +123,10 @@ nextjs-portal,
 
 .cursor {
   animation: blink 1s infinite;
+}
+
+.language-json {
+  display: none !important;
 }
 
 @keyframes blink {
