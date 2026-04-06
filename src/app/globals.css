@@ -112,6 +112,11 @@ nextjs-portal,
   text-decoration: underline;
 }
 
+.markdown-content li a {
+  color: #000 !important;
+  text-decoration: underline;
+}
+
 .dark .markdown-content a {
   color: #818cf8;
 }
