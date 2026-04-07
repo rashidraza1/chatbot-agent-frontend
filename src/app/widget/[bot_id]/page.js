@@ -30,6 +30,24 @@ export default function WidgetPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [accumulatedContent, setAccumulatedContent] = useState("");
 
+  const sanitizeMarkdown = (text) => {
+    if (!text) return text;
+
+    let sanitized = text;
+
+    // ✅ 1. Convert **bold** → <strong>bold</strong>
+    sanitized = sanitized.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // ✅ 2. Convert "* " (list) → ". "
+    sanitized = sanitized.replace(/(^|\n)\* /g, '$1. ')
+      .replace(/(\s)\* /g, '$1. ');
+
+    // ✅ 3. Remove remaining single asterisks
+    sanitized = sanitized.replace(/\*/g, '');
+
+    return sanitized;
+  };
+
   const [isLeadCaptured, setIsLeadCaptured] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('lead_captured') === 'true';
@@ -41,7 +59,7 @@ export default function WidgetPage() {
   const [leadError, setLeadError] = useState('');
 
   // Lead capture restriction (Bot ID 4 for now, can be set to 'all' later)
-  const collectLeadsFor = ['4']; 
+  const collectLeadsFor = ['4'];
   const shouldShowLeadForm = !isLeadCaptured && (collectLeadsFor.includes('all') || collectLeadsFor.includes(String(bot_id)));
 
   const messagesEndRef = useRef(null);
@@ -116,7 +134,8 @@ export default function WidgetPage() {
 
     newSocket.on('new_message', (msg) => {
       if (conversation && msg.conversation_id === conversation.id) {
-        setMessages(prev => [...prev, { ...msg, content: marked.parse(msg.content) }]);
+        const sanitizedContent = sanitizeMarkdown(msg.content);
+        setMessages(prev => [...prev, { ...msg, content: marked.parse(sanitizedContent) }]);
       }
     });
 
@@ -145,7 +164,7 @@ export default function WidgetPage() {
         // Ensure all historical messages are parsed as markdown if they aren't already
         const parsedMessages = data.messages.map(msg => ({
           ...msg,
-          content: marked.parse(msg.content)
+          content: marked.parse(sanitizeMarkdown(msg.content))
         }));
         setMessages(parsedMessages);
         if (socket) {
@@ -188,17 +207,17 @@ export default function WidgetPage() {
       setLeadError('Please provide your name and at least an email or mobile number.');
       return;
     }
-    
+
     setIsSubmittingLead(true);
     setLeadError('');
-    
+
     try {
       const res = await api.fetchWithAuth('/api/auth/guest/capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(leadForm)
       });
-      
+
       if (res.ok) {
         localStorage.setItem('lead_captured', 'true');
         setIsLeadCaptured(true);
@@ -221,9 +240,11 @@ export default function WidgetPage() {
     setNewMessage('');
     setShowEmojiPicker(false);
 
+    const sanitizedUserContent = sanitizeMarkdown(content);
+
     const tempUserMsg = {
       id: Date.now(),
-      content: marked.parse(content),
+      content: marked.parse(sanitizedUserContent),
       sender_type: 'visitor',
       createdAt: new Date()
     };
@@ -264,7 +285,10 @@ export default function WidgetPage() {
           const el = document.getElementById("streaming-message");
 
           if (el) {
-            el.innerHTML = marked.parse(streamingRef.current);
+            // Clean up trailing markdown symbols that would flicker
+            const currentText = streamingRef.current;
+            const cleanContent = currentText.replace(/(\*\*|__|\*|_)+$/, "");
+            el.innerHTML = marked.parse(sanitizeMarkdown(cleanContent));
           }
 
           scrollToBottom('auto');
@@ -364,7 +388,7 @@ export default function WidgetPage() {
                 await new Promise(r => setTimeout(r, 10));
               }
 
-              const finalHTML = marked.parse(streamingRef.current);
+              const finalHTML = marked.parse(sanitizeMarkdown(streamingRef.current));
 
               setMessages(prev => {
                 const filtered = prev.filter(
@@ -375,7 +399,7 @@ export default function WidgetPage() {
                   ...filtered,
                   {
                     ...data.userMessage,
-                    content: marked.parse(data.userMessage.content)
+                    content: marked.parse(sanitizeMarkdown(data.userMessage.content))
                   },
                   {
                     ...data.botMessage,
@@ -669,7 +693,18 @@ export default function WidgetPage() {
                       type="text"
                       placeholder={isListening ? 'Listening...' : "Type a message..."}
                       value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        // Replace asterisks in the input field as well to avoid "any time" visibility
+                        setNewMessage(val.replace(/\*/g, (match, offset, string) => {
+                          // Check if it's potentially a list marker
+                          if (offset === 0 || string[offset - 1] === '\n' || string[offset - 1] === ' ') {
+                            return '-';
+                          }
+                          // Otherwise use a bullet or dash
+                          return '-';
+                        }));
+                      }}
                       className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 py-3 px-2 focus:outline-none text-sm min-w-0"
                     />
 
@@ -698,62 +733,62 @@ export default function WidgetPage() {
                 </div>
               </div>
 
-            {shouldShowLeadForm && (
-              <div className="absolute inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-6 animate-in fade-in duration-300 rounded-r-2xl">
-                <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg mb-6 shadow-indigo-500/30">
-                  <MessageSquare size={32} className="text-white" />
-                </div>
-                <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 mb-2">Welcome! 👋</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-center mb-8 max-w-xs text-sm">Please introduce yourself to start chatting with us.</p>
-                
-                <form onSubmit={handleLeadSubmit} className="w-full max-w-sm space-y-4">
-                  <div className="space-y-1">
-                    <input
-                      type="text"
-                      required
-                      placeholder="Your Full Name"
-                      value={leadForm.name}
-                      onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
-                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm outline-none"
-                    />
+              {shouldShowLeadForm && (
+                <div className="absolute inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-6 animate-in fade-in duration-300 rounded-r-2xl">
+                  <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg mb-6 shadow-indigo-500/30">
+                    <MessageSquare size={32} className="text-white" />
                   </div>
-                  <div className="space-y-1">
-                    <input
-                      type="email"
-                      placeholder="Email Address"
-                      value={leadForm.email}
-                      onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
-                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm outline-none"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <input
-                      type="tel"
-                      placeholder="Mobile Number (Optional if Email provided)"
-                      value={leadForm.mobile_number}
-                      onChange={(e) => setLeadForm({ ...leadForm, mobile_number: e.target.value })}
-                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm outline-none"
-                    />
-                  </div>
-                  
-                  {leadError && (
-                    <div className="text-red-500 text-xs text-center font-medium bg-red-50 dark:bg-red-500/10 py-2 rounded-lg border border-red-100 dark:border-red-500/20 flex items-center justify-center space-x-1.5">
-                      <AlertCircle size={14} />
-                      <span>{leadError}</span>
-                    </div>
-                  )}
+                  <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 mb-2">Welcome! 👋</h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-center mb-8 max-w-xs text-sm">Please introduce yourself to start chatting with us.</p>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmittingLead || !leadForm.name || (!leadForm.email && !leadForm.mobile_number)}
-                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center font-medium disabled:opacity-50 disabled:shadow-none hover:scale-[1.02] active:scale-[0.98]"
-                    style={{ backgroundColor: botConfig.color_theme || '#4f46e5' }}
-                  >
-                    {isSubmittingLead ? 'Starting Chat...' : 'Start Chat'}
-                  </button>
-                </form>
-              </div>
-            )}
+                  <form onSubmit={handleLeadSubmit} className="w-full max-w-sm space-y-4">
+                    <div className="space-y-1">
+                      <input
+                        type="text"
+                        required
+                        placeholder="Your Full Name"
+                        value={leadForm.name}
+                        onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
+                        className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <input
+                        type="email"
+                        placeholder="Email Address"
+                        value={leadForm.email}
+                        onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
+                        className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <input
+                        type="tel"
+                        placeholder="Mobile Number (Optional if Email provided)"
+                        value={leadForm.mobile_number}
+                        onChange={(e) => setLeadForm({ ...leadForm, mobile_number: e.target.value })}
+                        className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm outline-none"
+                      />
+                    </div>
+
+                    {leadError && (
+                      <div className="text-red-500 text-xs text-center font-medium bg-red-50 dark:bg-red-500/10 py-2 rounded-lg border border-red-100 dark:border-red-500/20 flex items-center justify-center space-x-1.5">
+                        <AlertCircle size={14} />
+                        <span>{leadError}</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isSubmittingLead || !leadForm.name || (!leadForm.email && !leadForm.mobile_number)}
+                      className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center font-medium disabled:opacity-50 disabled:shadow-none hover:scale-[1.02] active:scale-[0.98]"
+                      style={{ backgroundColor: botConfig.color_theme || '#4f46e5' }}
+                    >
+                      {isSubmittingLead ? 'Starting Chat...' : 'Start Chat'}
+                    </button>
+                  </form>
+                </div>
+              )}
 
             </div>
           </div>
