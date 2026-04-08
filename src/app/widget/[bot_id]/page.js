@@ -38,6 +38,13 @@ export default function WidgetPage() {
     // ✅ 1. Convert **bold** → <strong>bold</strong>
     sanitized = sanitized.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
+
+    // ✅ 2. Bold Requirement / Enquiry / Enq (all variations)
+    sanitized = sanitized.replace(
+      /\b(Your\s+)?(Requirement(\s*\/\s*Enquiry)?|Enquiry|Enq)\b/gi,
+      '<strong>$&</strong>'
+    );
+
     // ✅ 2. Convert "* " (list) → ". "
     sanitized = sanitized.replace(/(^|\n)\* /g, '$1. ')
       .replace(/(\s)\* /g, '$1. ');
@@ -45,6 +52,7 @@ export default function WidgetPage() {
     // ✅ 3. Remove remaining single asterisks
     sanitized = sanitized.replace(/\*/g, '');
 
+    console.log("sanitized", sanitized);
     return sanitized;
   };
 
