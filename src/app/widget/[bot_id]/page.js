@@ -39,12 +39,6 @@ export default function WidgetPage() {
     sanitized = sanitized.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
 
-    // ✅ 2. Bold Requirement / Enquiry / Enq (all variations)
-    sanitized = sanitized.replace(
-      /\b(Your\s+)?(Requirement(\s*\/\s*Enquiry)?|Enquiry|Enq)\b/gi,
-      '<strong>$&</strong>'
-    );
-
     // ✅ 2. Convert "* " (list) → ". "
     sanitized = sanitized.replace(/(^|\n)\* /g, '$1. ')
       .replace(/(\s)\* /g, '$1. ');

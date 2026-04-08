@@ -82,6 +82,7 @@ nextjs-portal,
 
 .markdown-content li {
   margin-bottom: 0.25rem;
+  font-weight: bold;
 }
 
 .markdown-content strong {
@@ -109,6 +110,16 @@ nextjs-portal,
 
 .markdown-content a {
   color: #fff;
+  text-decoration: underline;
+}
+
+.justify-end .markdown-content p a {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.justify-start .markdown-content p a {
+  color: #000 !important;
   text-decoration: underline;
 }
 
