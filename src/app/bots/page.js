@@ -12,6 +12,8 @@ export default function BotsPage() {
   const [selectedBotId, setSelectedBotId] = useState(null);
   const [copied, setCopied] = useState(false);
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
   const fetchBots = async () => {
     try {
       const res = await api.get('/bots');
@@ -38,7 +40,7 @@ export default function BotsPage() {
   };
 
   const getEmbedCode = (id) => {
-    return `<script>\n  (function(){\n    var s=document.createElement("script");\n    s.src="http://localhost:5000/widget.js";\n    s.setAttribute("data-bot-id","${id}");\n    document.head.appendChild(s);\n  })();\n</script>`;
+    return `<script>\n  (function(){\n    var s=document.createElement("script");\n    s.src="${baseUrl}/widget.js";\n    s.setAttribute("data-bot-id","${id}");\n    document.head.appendChild(s);\n  })();\n</script>`;
   };
 
   const copyToClipboard = () => {
