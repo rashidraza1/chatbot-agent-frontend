@@ -23,7 +23,7 @@ export default function InboxPage() {
 
   useEffect(() => {
     // Connect to Socket.io server
-    const newSocket = io(`${process.env.NEXT_PUBLIC_API_URL}/socket.io`, {
+    const newSocket = io(`https://kalamiq.com/socket.io`, {
       auth: { token: Cookies.get('token') }
     });
     setSocket(newSocket);

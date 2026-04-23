@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.NEXT_PUBLIC_API_URL || 'https://kalamiq.com';
+const API_BASE = 'https://kalamiq.com';
 
 const api = {
   async fetchWithAuth(endpoint, options = {}) {

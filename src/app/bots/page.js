@@ -12,7 +12,8 @@ export default function BotsPage() {
   const [selectedBotId, setSelectedBotId] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  //const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const baseUrl = 'https://kalamiq.com';
 
   const fetchBots = async () => {
     try {
