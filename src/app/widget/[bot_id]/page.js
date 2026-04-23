@@ -6,7 +6,7 @@ import { Bot, Send, X, AlertCircle, Smile, Mic, MicOff, Maximize2, Minimize2, Mi
 import { marked } from 'marked';
 import api from '@/utils/api';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.NEXT_PUBLIC_API_URL || 'https://kalamiq.com';
 
 export default function WidgetPage() {
   const params = useParams();
